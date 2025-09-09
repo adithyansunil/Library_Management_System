@@ -10,15 +10,17 @@ body {
 nav {
     margin-bottom: 20px;
     padding: 10px;
-    background: #2c3e50;
+    background: #fafafa;
     border-radius: 6px;
+    text-align: right;
 }
 
 nav a {
-    color: #fff;
+    color:#0691ed;
     margin-right: 15px;
     text-decoration: none;
-    font-weight: bold;
+    font-weight: lighter;
+    text-align: right;
 }
 
 nav a:hover {
