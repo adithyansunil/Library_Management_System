@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Book List</h3>
+
+<!-- Form to Add Book -->
+<form method="POST" action="{{ url_for('add_book') }}">
+    <input type="text" name="serial" placeholder="Serial Number" required>
+    <input type="text" name="name" placeholder="Book Name" required>
+    <input type="text" name="author" placeholder="Author Name" required>
+    <button type="submit">Add Book</button>
+</form>
+
+<!-- Table of Books -->
+<table>
+    <thead>
+        <tr>
+            <th>Serial</th>
+            <th>Name</th>
+            <th>Author</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+        <tr>
+            <td>{{ book[1] }}</td>
+            <td>{{ book[2] }}</td>
+            <td>{{ book[3] }}</td>
+            <td>{{ book[4] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

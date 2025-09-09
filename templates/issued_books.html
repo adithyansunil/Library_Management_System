@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Issued Books</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Serial</th>
+            <th>Name</th>
+            <th>Author</th>
+            <th>Taken By</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+        <tr>
+            <td>{{ book[1] }}</td>
+            <td>{{ book[2] }}</td>
+            <td>{{ book[3] }}</td>
+            <td>{{ book[5] }}</td>
+            <td>
+                <a href="{{ url_for('return_book', book_id=book[0]) }}" class="action-btn">Return</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

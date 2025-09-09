@@ -1,0 +1,97 @@
+/* === Global Styles === */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #fafafa;
+    color: #333;
+}
+
+/* === Navbar === */
+nav {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #2c3e50;
+    border-radius: 6px;
+}
+
+nav a {
+    color: #fff;
+    margin-right: 15px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* === Headings === */
+h2, h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+/* === Forms === */
+form {
+    margin-bottom: 20px;
+}
+
+input, select {
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button, .btn {
+    padding: 6px 12px;
+    background: #2980b9;
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover, .btn:hover {
+    background: #1f6391;
+}
+
+/* === Tables === */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+tr:hover {
+    background: #eef6ff;
+}
+
+/* === Action Button (Return) === */
+.action-btn {
+    background: #e74c3c;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background: #c0392b;
+}

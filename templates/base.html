@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Library Management System</title>
+    <!-- Link external CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
+</head>
+<body>
+    <h2>Library Management System</h2>
+    <nav>
+        <a href="{{ url_for('book_list') }}">Book List</a>
+        <a href="{{ url_for('issue_book') }}">Issue Book</a>
+        <a href="{{ url_for('issued_books') }}">Issued Books</a>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
