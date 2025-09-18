@@ -1,5 +1,30 @@
-venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.db
+
+# Flask / SQLite
 instance/
+library.db
+
+# CSV backup
+books.csv
+
+# Environment files (tokens, secrets)
 .env
+
+# Virtual environment
+venv/
+env/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log

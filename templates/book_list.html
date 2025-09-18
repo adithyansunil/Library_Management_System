@@ -18,15 +18,17 @@
             <th>Name</th>
             <th>Author</th>
             <th>Status</th>
+            <!-- <th>Taken By</th> -->
         </tr>
     </thead>
     <tbody>
         {% for book in books %}
         <tr>
-            <td>{{ book[1] }}</td>
-            <td>{{ book[2] }}</td>
-            <td>{{ book[3] }}</td>
-            <td>{{ book[4] }}</td>
+            <td>{{ book["serial"] }}</td>
+            <td>{{ book["name"] }}</td>
+            <td>{{ book["author"] }}</td>
+            <td>{{ book["status"] }}</td>
+            <!-- <td>{{ book["taken_by"] }}</td> -->
         </tr>
         {% endfor %}
     </tbody>

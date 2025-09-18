@@ -15,12 +15,14 @@
     <tbody>
         {% for book in books %}
         <tr>
-            <td>{{ book[1] }}</td>
-            <td>{{ book[2] }}</td>
-            <td>{{ book[3] }}</td>
-            <td>{{ book[5] }}</td>
+            <td>{{ book["serial"] }}</td>
+            <td>{{ book["name"] }}</td>
+            <td>{{ book["author"] }}</td>
+            <td>{{ book["taken_by"] }}</td>
             <td>
-                <a href="{{ url_for('return_book', book_id=book[0]) }}" class="action-btn">Return</a>
+                <form method="POST" action="{{ url_for('return_book', serial=book['serial']) }}">
+                    <button type="submit" class="action-btn">Return</button>
+                </form>
             </td>
         </tr>
         {% endfor %}
