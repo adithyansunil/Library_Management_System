@@ -150,7 +150,10 @@ def return_book(serial):
 # ------------------------
 # Run App
 # ------------------------
-if __name__ == "__main__":
+@app.before_first_request
+def initialize():
     init_db()
     restore_from_github()
+
+if __name__ == "__main__":
     app.run(debug=True)
