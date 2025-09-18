@@ -1,68 +1,113 @@
-# github_sync.py
-
 import os
 import base64
 import requests
+import sqlite3
+import csv
 
-# Load token from environment
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-if not GITHUB_TOKEN:
-    raise Exception("❌ Missing GITHUB_TOKEN environment variable.")
-
-# ⚠️ Must match your GitHub username exactly (case-sensitive!)
-REPO_OWNER = "AdithyanSunil"
-REPO_NAME = "Library_Management_System"
+# --------------------------
+# GitHub Repo Settings
+# --------------------------
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+REPO = "adithyansunil/Library_Management_System"
 FILE_PATH = "books.csv"
-BRANCH = "main"  # or "master" if your repo uses master
 
-API_URL = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
-HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
+if not GITHUB_TOKEN:
+    raise Exception("❌ Missing GITHUB_TOKEN environment variable. Please set it before running the app.")
 
+headers = {
+    "Authorization": f"token {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3+json",
+}
 
-def read_books_csv():
-    """Fetch books.csv content from GitHub and return as plain text."""
-    response = requests.get(API_URL, headers=HEADERS)
+# --------------------------
+# Backup SQLite -> GitHub CSV
+# --------------------------
+def backup_to_github(db_path):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM books")
+    rows = cur.fetchall()
+    conn.close()
 
-    if response.status_code == 200:
-        data = response.json()
-        content = base64.b64decode(data["content"]).decode("utf-8")
-        return content
+    # Write rows to a local CSV
+    with open(FILE_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "serial", "name", "author", "status", "taken_by"])
+        writer.writerows(rows)
 
-    elif response.status_code == 404:
-        # Create fresh CSV if missing
-        default_csv = "Serial,Book Name,Author,Status,Taken By\n"
-        write_books_csv(default_csv, "Initial commit with CSV headers")
-        return default_csv
+    # Upload CSV to GitHub
+    with open(FILE_PATH, "rb") as f:
+        content = f.read()
 
-    elif response.status_code == 401:
-        raise Exception("❌ GitHub authentication failed. Check your GITHUB_TOKEN.")
+    url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
 
-    else:
-        raise Exception(f"❌ Failed to fetch file: {response.status_code} - {response.text}")
-
-
-def write_books_csv(content, message="Update books.csv"):
-    """Push new content to GitHub (create or update)."""
-    # Get current file SHA (required for updates)
-    get_resp = requests.get(API_URL, headers=HEADERS)
+    # Get SHA if file exists
     sha = None
-    if get_resp.status_code == 200:
-        sha = get_resp.json()["sha"]
+    resp = requests.get(url, headers=headers)
+    if resp.status_code == 200:
+        sha = resp.json().get("sha")
 
-    encoded_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
-
-    payload = {
-        "message": message,
-        "content": encoded_content,
-        "branch": BRANCH,
+    data = {
+        "message": "🔄 Backup books.csv from SQLite",
+        "content": base64.b64encode(content).decode("utf-8"),
     }
     if sha:
-        payload["sha"] = sha
+        data["sha"] = sha
 
-    put_resp = requests.put(API_URL, headers=HEADERS, json=payload)
+    r = requests.put(url, headers=headers, json=data)
+    if r.status_code not in [200, 201]:
+        raise Exception(f"❌ Failed to upload file: {r.status_code} - {r.text}")
+    print("✅ Backup successful → books.csv uploaded to GitHub")
 
-    if put_resp.status_code not in (200, 201):
-        raise Exception(f"❌ Failed to update file: {put_resp.status_code} - {put_resp.text}")
+# --------------------------
+# Restore GitHub CSV -> SQLite
+# --------------------------
+def restore_from_github(db_path):
+    url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print("⚠️ No books.csv found in GitHub, skipping restore.")
+        return
 
-    print("✅ books.csv synced successfully to GitHub.")
-    return True
+    content = base64.b64decode(r.json()["content"])
+    lines = content.decode("utf-8").splitlines()
+
+    reader = csv.DictReader(lines)
+    rows = list(reader)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    # Ensure table exists
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS books (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            serial TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            author TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Available',
+            taken_by TEXT
+        )
+    """)
+
+    # Clear existing rows
+    cur.execute("DELETE FROM books")
+
+    # Insert from CSV
+    for row in rows:
+        cur.execute(
+            "INSERT OR REPLACE INTO books (id, serial, name, author, status, taken_by) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                row.get("id"),
+                row.get("serial"),
+                row.get("name"),
+                row.get("author"),
+                row.get("status", "Available"),
+                row.get("taken_by") if "taken_by" in row else None
+            )
+        )
+
+
+    conn.commit()
+    conn.close()
+    print("✅ Restore successful → SQLite updated from books.csv")

@@ -20,7 +20,7 @@
             <td>{{ book["author"] }}</td>
             <td>{{ book["taken_by"] }}</td>
             <td>
-                <form method="POST" action="{{ url_for('return_book', serial=book['serial']) }}">
+                <form method="POST" action="{{ url_for('return_book', book_id=book['id']) }}">
                     <button type="submit" class="action-btn">Return</button>
                 </form>
             </td>

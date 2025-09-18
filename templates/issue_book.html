@@ -4,9 +4,9 @@
 
 <form method="POST">
     <label>Book:</label>
-    <select name="serial" required>
+    <select name="book" required>
         {% for book in books if book["status"] == "Available" %}
-        <option value="{{ book['serial'] }}">{{ book["name"] }} ({{ book["serial"] }})</option>
+        <option value="{{ book['id'] }}">{{ book["name"] }} ({{ book["serial"] }})</option>
         {% endfor %}
     </select>
 
