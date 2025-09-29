@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Issued Books</h3>
+<h3>📚 Issued Books</h3>
 
-<table>
+<div class="issued-list">
+    {% for book in books %}
+        <div class="book-card">
+            <h4>{{ book["name"] }}</h4>
+            <p><strong>Serial:</strong> {{ book["serial"] }}</p>
+            <p><strong>Author:</strong> {{ book["author"] }}</p>
+            <p><strong>Taken By:</strong> {{ book["taken_by"] }}</p>
+
+                <form method="POST" action="{{ url_for('return_book', book_id=book['id']) }}">
+                <button type="submit">Return</button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Table view only for desktop -->
+<table class="desktop-table">
     <thead>
         <tr>
             <th>Serial</th>
@@ -20,8 +36,8 @@
             <td>{{ book["author"] }}</td>
             <td>{{ book["taken_by"] }}</td>
             <td>
-                <form method="POST" action="{{ url_for('return_book', book_id=book['id']) }}">
-                    <button type="submit" class="action-btn">Return</button>
+                    <form method="POST" action="{{ url_for('return_book', book_id=book['id']) }}">
+                    <button type="submit">Return</button>
                 </form>
             </td>
         </tr>

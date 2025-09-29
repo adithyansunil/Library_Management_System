@@ -1,18 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Issue Book</h3>
+<h3>📖 Issue a Book</h3>
 
-<form method="POST">
-    <label>Book:</label>
-    <select name="book" required>
-        {% for book in books if book["status"] == "Available" %}
-        <option value="{{ book['id'] }}">{{ book["name"] }} ({{ book["serial"] }})</option>
-        {% endfor %}
-    </select>
+<div class="issue-form">
+    <form method="POST" class="card">
+        <label>📘 Select Book:</label>
+        <select name="serial" required>
+            {% for book in books %}
+                <option value="{{ book['serial'] }}">{{ book["name"] }} ({{ book["serial"] }})</option>
+            {% endfor %}
+        </select>
 
-    <label>Your Name:</label>
-    <input type="text" name="user" required>
+        <label>👤 Your Name:</label>
+        <input type="text" name="issued_to" required placeholder="Enter your name">
 
-    <button type="submit">Issue</button>
-</form>
+        <button type="submit">Issue Book</button>
+    </form>
+</div>
 {% endblock %}

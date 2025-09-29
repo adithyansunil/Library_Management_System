@@ -9,7 +9,6 @@ import csv
 # --------------------------
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REPO = "adithyansunil/Library_Management_System"
-FILE_PATH = "books.csv"
 
 if not GITHUB_TOKEN:
     raise Exception("❌ Missing GITHUB_TOKEN environment variable. Please set it before running the app.")
@@ -20,57 +19,91 @@ headers = {
 }
 
 # --------------------------
-# Backup SQLite -> GitHub CSV
+# Generic GitHub Functions
 # --------------------------
-def backup_to_github(db_path):
+def upload_to_github(file_path, message):
+    # Read file content
+    with open(file_path, "rb") as f:
+        content = f.read()
+
+    url = f"https://api.github.com/repos/{REPO}/contents/{file_path}"
+
+    # Always fetch latest SHA
+    resp = requests.get(url, headers=headers)
+    sha = resp.json().get("sha") if resp.status_code == 200 else None
+
+    data = {
+        "message": message,
+        "content": base64.b64encode(content).decode("utf-8"),
+        "sha": sha  # include if file exists
+    }
+
+    r = requests.put(url, headers=headers, json=data)
+
+    # Retry once if conflict
+    if r.status_code == 409:
+        resp = requests.get(url, headers=headers)
+        sha = resp.json().get("sha")
+        data["sha"] = sha
+        r = requests.put(url, headers=headers, json=data)
+
+    if r.status_code not in [200, 201]:
+        raise Exception(f"❌ Failed to upload {file_path}: {r.status_code} - {r.text}")
+
+    print(f"✅ {file_path} uploaded to GitHub")
+
+
+def download_from_github(file_path):
+    """Download file content from GitHub repo."""
+    url = f"https://api.github.com/repos/{REPO}/contents/{file_path}"
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print(f"⚠️ No {file_path} found in GitHub, skipping restore.")
+        return None
+    content = base64.b64decode(r.json()["content"])
+    return content.decode("utf-8").splitlines()
+
+# --------------------------
+# Backup Functions
+# --------------------------
+def backup_books(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("SELECT * FROM books")
     rows = cur.fetchall()
     conn.close()
 
-    # Write rows to a local CSV
-    with open(FILE_PATH, "w", newline="", encoding="utf-8") as f:
+    file_path = "books.csv"
+    with open(file_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["id", "serial", "name", "author", "status", "taken_by"])
         writer.writerows(rows)
 
-    # Upload CSV to GitHub
-    with open(FILE_PATH, "rb") as f:
-        content = f.read()
+    upload_to_github(file_path, "🔄 Backup books.csv from SQLite")
 
-    url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
 
-    # Get SHA if file exists
-    sha = None
-    resp = requests.get(url, headers=headers)
-    if resp.status_code == 200:
-        sha = resp.json().get("sha")
+def backup_users(db_path):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users")
+    rows = cur.fetchall()
+    conn.close()
 
-    data = {
-        "message": "🔄 Backup books.csv from SQLite",
-        "content": base64.b64encode(content).decode("utf-8"),
-    }
-    if sha:
-        data["sha"] = sha
+    file_path = "users.csv"
+    with open(file_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "username", "password"])
+        writer.writerows(rows)
 
-    r = requests.put(url, headers=headers, json=data)
-    if r.status_code not in [200, 201]:
-        raise Exception(f"❌ Failed to upload file: {r.status_code} - {r.text}")
-    print("✅ Backup successful → books.csv uploaded to GitHub")
+    upload_to_github(file_path, "🔄 Backup users.csv from SQLite")
 
 # --------------------------
-# Restore GitHub CSV -> SQLite
+# Restore Functions
 # --------------------------
-def restore_from_github(db_path):
-    url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
-    r = requests.get(url, headers=headers)
-    if r.status_code != 200:
-        print("⚠️ No books.csv found in GitHub, skipping restore.")
+def restore_books(db_path):
+    lines = download_from_github("books.csv")
+    if not lines:
         return
-
-    content = base64.b64decode(r.json()["content"])
-    lines = content.decode("utf-8").splitlines()
 
     reader = csv.DictReader(lines)
     rows = list(reader)
@@ -78,7 +111,6 @@ def restore_from_github(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
-    # Ensure table exists
     cur.execute("""
         CREATE TABLE IF NOT EXISTS books (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,10 +122,8 @@ def restore_from_github(db_path):
         )
     """)
 
-    # Clear existing rows
     cur.execute("DELETE FROM books")
 
-    # Insert from CSV
     for row in rows:
         cur.execute(
             "INSERT OR REPLACE INTO books (id, serial, name, author, status, taken_by) VALUES (?, ?, ?, ?, ?, ?)",
@@ -103,11 +133,57 @@ def restore_from_github(db_path):
                 row.get("name"),
                 row.get("author"),
                 row.get("status", "Available"),
-                row.get("taken_by") if "taken_by" in row else None
-            )
+                row.get("taken_by") if "taken_by" in row else None,
+            ),
         )
-
 
     conn.commit()
     conn.close()
     print("✅ Restore successful → SQLite updated from books.csv")
+
+
+def restore_users(db_path):
+    lines = download_from_github("users.csv")
+    if not lines:
+        return
+
+    reader = csv.DictReader(lines)
+    rows = list(reader)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
+
+    cur.execute("DELETE FROM users")
+
+    for row in rows:
+        cur.execute(
+            "INSERT OR REPLACE INTO users (id, username, password) VALUES (?, ?, ?)",
+            (
+                row.get("id"),
+                row.get("username"),
+                row.get("password"),
+            ),
+        )
+
+    conn.commit()
+    conn.close()
+    print("✅ Restore successful → SQLite updated from users.csv")
+
+# --------------------------
+# Master Functions
+# --------------------------
+def backup_to_github(db_path):
+    backup_books(db_path)
+    backup_users(db_path)
+
+def restore_from_github(db_path):
+    restore_books(db_path)
+    restore_users(db_path)

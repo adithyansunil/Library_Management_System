@@ -1,30 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Library Management System</title>
+    <title>Library Management</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
 </head>
 <body>
     <h2>Library Management System</h2>
+    {% if session.get('user_id') %}
+    <div class="logout-container">
+        <form method="POST" action="{{ url_for('logout') }}">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+    {% endif %}
+    <!-- Top Navigation -->
     <nav>
         <a href="{{ url_for('book_list') }}">Book List</a>
         <a href="{{ url_for('issue_book') }}">Issue Book</a>
         <a href="{{ url_for('issued_books') }}">Issued Books</a>
     </nav>
 
+    <!-- Content -->
     <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul class="flash-messages">
-              {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Bottom Navigation for Mobile -->
+    <div class="bottom-nav">
+    <a href="{{ url_for('book_list') }}">Home</a>
+    <a href="{{ url_for('issue_book') }}">Issue</a>
+    <a href="{{ url_for('issued_books') }}">Issued</a>
+    {% if session.get('user_id') %}
+    <form method="POST" action="{{ url_for('logout') }}" style="display:inline;">
+        <button type="submit" class="logout-btn small">Logout</button>
+    </form>
+    {% endif %}
+    </div>
+
 </body>
 </html>
