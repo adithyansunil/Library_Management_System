@@ -19,33 +19,27 @@ headers = {
 }
 
 # --------------------------
-# Generic GitHub Functions
+# GitHub Helpers
 # --------------------------
 def upload_to_github(file_path, message):
-    # Read file content
+    """Upload a file to GitHub repo"""
     with open(file_path, "rb") as f:
         content = f.read()
 
     url = f"https://api.github.com/repos/{REPO}/contents/{file_path}"
 
-    # Always fetch latest SHA
+    # Always fetch latest SHA to avoid 409 conflict
     resp = requests.get(url, headers=headers)
     sha = resp.json().get("sha") if resp.status_code == 200 else None
 
     data = {
         "message": message,
         "content": base64.b64encode(content).decode("utf-8"),
-        "sha": sha  # include if file exists
     }
+    if sha:
+        data["sha"] = sha
 
     r = requests.put(url, headers=headers, json=data)
-
-    # Retry once if conflict
-    if r.status_code == 409:
-        resp = requests.get(url, headers=headers)
-        sha = resp.json().get("sha")
-        data["sha"] = sha
-        r = requests.put(url, headers=headers, json=data)
 
     if r.status_code not in [200, 201]:
         raise Exception(f"❌ Failed to upload {file_path}: {r.status_code} - {r.text}")
@@ -69,7 +63,9 @@ def download_from_github(file_path):
 def backup_books(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM books")
+
+    # 🔑 CHANGE 1: Explicitly select only the 6 required columns
+    cur.execute("SELECT id, serial, name, author, status, taken_by FROM books")
     rows = cur.fetchall()
     conn.close()
 
@@ -85,7 +81,8 @@ def backup_books(db_path):
 def backup_users(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users")
+    # 🔑 CHANGE 2: Explicitly select needed columns
+    cur.execute("SELECT id, username, password FROM users")
     rows = cur.fetchall()
     conn.close()
 
@@ -124,6 +121,7 @@ def restore_books(db_path):
 
     cur.execute("DELETE FROM books")
 
+    # 🔑 CHANGE 3: Use safe default values (avoid blank status/taken_by)
     for row in rows:
         cur.execute(
             "INSERT OR REPLACE INTO books (id, serial, name, author, status, taken_by) VALUES (?, ?, ?, ?, ?, ?)",
@@ -132,8 +130,8 @@ def restore_books(db_path):
                 row.get("serial"),
                 row.get("name"),
                 row.get("author"),
-                row.get("status", "Available"),
-                row.get("taken_by") if "taken_by" in row else None,
+                row.get("status") or "Available",   # default if blank
+                row.get("taken_by") or None         # default if blank
             ),
         )
 

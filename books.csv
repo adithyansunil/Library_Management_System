@@ -1,10 +1,11 @@
 id,serial,name,author,status,taken_by
 60,101,1984,George Orwell,Available,
-61,102,The Great Gatsby,F.Scott,Issued,adithyan
-62,103,The Giver,Lois Lowry,Available,
-63,104,Harry Potter Series,J.K.Rowling,Issued,adithyan
-64,105,Fifty Shades of Grey,E.L. James,Issued,adhi123
+61,102,The Great Gatsby,F.Scott,Issued,adhi123
+62,103,The Giver,Lois Lowry,Issued,adithyan
+63,104,Harry Potter Series,J.K.Rowling,Issued,adhi123
+64,105,Fifty Shades of Grey,E.L. James,Available,
 65,106,Kane Chronicles ,Rick Rodriguez ,Available,
-66,107,To Kill a Mockingbird,Harper Lee,Available,
-67,108,Pride and Prejudice,Pride and Prejudice,Available,
-68,109,War and Peace,Leo Tolstoy,Available,
+66,107,To Kill a Mockingbird,Harper Lee,Available,Available
+67,108,Pride and Prejudice,Pride and Prejudice,Available,Available
+68,109,War and Peace,Leo Tolstoy,Available,Available
+69,170,The Anne Frank ,Anne Frank ,Available,Available
